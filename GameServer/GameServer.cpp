@@ -5,7 +5,6 @@
 #include <thread>
 #include <mutex>
 
-
 class SpinLock
 {
 public:
@@ -17,6 +16,8 @@ public:
 		while (_locked.compare_exchange_strong(expected, desired) == false)
 		{
 			expected = false;
+
+			std::this_thread::sleep_for(100ms);
 		}
 
 	}
