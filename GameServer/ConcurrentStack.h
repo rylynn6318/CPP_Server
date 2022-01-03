@@ -45,107 +45,81 @@ private:
 template<typename T>
 class LockFreeStack
 {
+	struct Node;
+	struct CountedNodePtr
+	{
+		int32 externalCount = 0;
+		Node* ptr = nullptr;
+	};
+
 	struct Node
 	{
-		Node(const T& value) : data(value), next(nullptr) {}
+		Node(const T& value) : data(make_shared<T>(value))
+		{
 
-		T Data;
-		Node* next;
+		}
+
+		shared_ptr<T> data;
+		atomic<int32> internalCount = 0;
+		CountedNodePtr next;
 	};
 
 public:
 	void Push(const T& value)
 	{
-		Node* node = new Node(value);
-		node->next = _head;
+		CountedNodePtr node;
+		node.ptr = new Node(value);
+		node.externalCount = 1;
 
-		while (_head.compare_exchange_weak(node->next, node) == false)
+		node.ptr->next = _head;
+		while (_head.compare_exchange_weak(node.ptr->next, node) == false)
 		{
-
 		}
 	}
 
-	bool TryPop(T& OUT Value)
+	shared_ptr<T> TryPop()
 	{
-		++_popCount;
-
-		Node* oldHead = _head;
-		while (oldHead && _head.compare_exchange_weak(oldHead, oldHead->next) == false)
+		CountedNodePtr oldHead = _head;
+		while (true)
 		{
+			IncreaseHeadCount(oldHead);
+			Node* ptr = oldHead.ptr;
 
-		}
+			if (ptr == nullptr)
+				return shared_ptr<T>();
 
-		if (oldHead == nullptr)
-		{
-			_popCount--;
-			return false;
-		}
-
-		value = oldHead->data;
-		TryDelete(oldHead);
-		return true;
-	}
-
-	void TryDelete(Node* oldHead)
-	{
-		if (_popCount == 1)
-		{
-			Node* node = _pendingList.exchange(nullptr);
-
-			if (--_popCount == 0)
+			if (_head.compare_exchange_strong(oldHead, ptr->next))
 			{
-				DeleteNodes(node);
+				shared_ptr<T> res;
+				res->swap(ptr->data);
+				const int32 countIncrease = oldHead.externalCount - 2;
+				if (ptr->internalCount.fetch_add(countIncrease) == -countIncrease)
+					delete ptr;
+
+				return res;
 			}
-			else if (node)
+			else if (ptr->internalCount.fetch_sub(1) == 1)
 			{
-				ChainPendingNodeList(node);
+				delete ptr;
 			}
-
-			delete oldHead;
-		}
-		else
-		{
-			ChainPendingNode(oldHead);
-			--_popCount; 
-		}
-	}
-
-	void ChainPendingNodeList(Node* first, Node* last)
-	{
-		last->next = _pendingList;
-		while (_pendingList.compare_exchange_weak(last->next, first) == false)
-		{
-		}
-	}
-
-	void ChainPendingNodeList(Node* node)
-	{
-		Node* last = node;
-		while (last->next)
-		{
-			last = last->next;
-		}
-
-		ChainPendingNodeList(node, last);
-	}
-
-	void ChainPendingNode(Node* node)
-	{
-		ChainPendingNodeList(node, node);
-	}
-
-	static void DeleteNodes(Node* node)
-	{
-		while (node)
-		{
-			Node* next = node->next;
-			delete node;
-			node = next;
 		}
 	}
 
 private:
-	atomic<Node*> _head;
-	atomic<uint32> _popCount = 0; // Pop을 실행 중인 스레드 개수
-	atomic<Node*> _pendingList; // 삭제되어야 할 노드들 (첫번째 노드)
+	void IncreaseHeadCount(CountedNodePtr& oldCounter)
+	{
+		while (true)
+		{
+			CountedNodePtr newCounter = oldCounter;
+			newCounter.externalCount++;
+
+			if (_head.compare_exchange_strong(oldCounter, newCounter))
+			{
+				break;
+			}
+		}
+	}
+
+private:
+	atomic<CountedNodePtr> _head;
 };
