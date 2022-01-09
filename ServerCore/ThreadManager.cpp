@@ -40,7 +40,7 @@ auto ThreadManager::Join() -> void
 auto ThreadManager::InitTLS() -> void
 {
 	static Atomic<uint32> SThreadID = 1;
-	LThreadID = SThreadID.fetch_add(1);
+	LThreadId = SThreadID.fetch_add(1);
 }
 
 auto ThreadManager::DestroyTLS() -> void
