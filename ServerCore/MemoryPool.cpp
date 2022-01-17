@@ -3,50 +3,40 @@
 
 MemoryPool::MemoryPool(int32 allocSize) : _allocSize(allocSize)
 {
+	::InitializeSListHead(&_header);
 }
 
 MemoryPool::~MemoryPool()
 {
-	while (_queue.empty()==false)
+	while (MemoryHeader* memory = static_cast<MemoryHeader*>(::InterlockedPopEntrySList(&_header)))
 	{
-		MemoryHeader* header = _queue.front();
-		_queue.pop();
-		::free(header);
+		::_aligned_free(memory);
 	}
 }
 
 auto MemoryPool::Push(MemoryHeader* ptr) -> void
 {
-	WRITE_LOCK;
 	ptr->allocSize = 0;
 
-	_queue.push(ptr);
+	::InterlockedPushEntrySList(&_header, static_cast<PSLIST_ENTRY>(ptr));
 
 	_allocCount.fetch_sub(1);
 }
 
 auto MemoryPool::Pop() -> MemoryHeader*
 {
-	MemoryHeader* header = nullptr;
-	{
-		WRITE_LOCK;
-		if (_queue.empty() == false)
-		{
-			header = _queue.front();
-			_queue.pop();
-		}
-	}
+	MemoryHeader* memory = static_cast<MemoryHeader*>(::InterlockedPopEntrySList(&_header));
 
-	if (header == nullptr)
+	if (memory == nullptr)
 	{
-		header = reinterpret_cast<MemoryHeader*>(::malloc(_allocSize));
+		memory = reinterpret_cast<MemoryHeader*>(::_aligned_malloc(_allocSize, SLIST_ALIGNMENT));
 	}
 	else
 	{
-		ASSERT_CRASH(header->allocSize == 0);
+		ASSERT_CRASH(memory->allocSize == 0);
 	}
 
 	_allocCount.fetch_add(1);
 
-	return header;
+	return memory;
 }
