@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Allocator.h"
+#include "Memory.h"
 
 auto BaseAllocator::Alloc(int32 size) -> void*
 {
@@ -24,4 +25,14 @@ auto StompAllocator::Release(void* ptr) -> void
 	const int64 address = reinterpret_cast<int64>(ptr);
 	const int64 baseAddress = address - (address % PAGE_SIZE);
 	::VirtualFree(reinterpret_cast<void*>(baseAddress), 0, MEM_RESERVE);
+}
+
+auto PoolAllocator::Alloc(int32 size) -> void*
+{
+	return GMemory->Allocate(size);
+}
+
+auto PoolAllocator::Release(void* ptr) -> void
+{
+	GMemory->Release(ptr);
 }

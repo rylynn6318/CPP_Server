@@ -15,6 +15,15 @@ public:
 	static auto Release(void* ptr)->void;
 };
 
+
+class PoolAllocator
+{
+public:
+	static auto Alloc(int32 size)->void*;
+	static auto Release(void* ptr)->void;
+};
+
+
 template<typename T>
 class StlAllocator
 {
