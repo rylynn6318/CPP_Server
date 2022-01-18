@@ -20,7 +20,8 @@ auto MemoryPool::Push(MemoryHeader* ptr) -> void
 
 	::InterlockedPushEntrySList(&_header, static_cast<PSLIST_ENTRY>(ptr));
 
-	_allocCount.fetch_sub(1);
+	_useCount.fetch_sub(1);
+	_reserveCount.fetch_add(1);
 }
 
 auto MemoryPool::Pop() -> MemoryHeader*
@@ -34,9 +35,10 @@ auto MemoryPool::Pop() -> MemoryHeader*
 	else
 	{
 		ASSERT_CRASH(memory->allocSize == 0);
+		_reserveCount.fetch_sub(1);
 	}
 
-	_allocCount.fetch_add(1);
+	_useCount.fetch_add(1);
 
 	return memory;
 }

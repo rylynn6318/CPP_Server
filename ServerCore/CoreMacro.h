@@ -16,13 +16,13 @@
 //---------------------------
 //			Memory
 //---------------------------
-#ifdef _DEBUG
-#define myalloc(size) PoolAllocator::Alloc(size)
-#define myrelease(ptr) PoolAllocator::Release(ptr)
-#else
-#define myalloc(size) BaseAllocator::Alloc(size)
-#define myrelease(ptr) BaseAllocator::Release(ptr)
-#endif
+//#ifdef _DEBUG
+//#define myalloc(size) PoolAllocator::Alloc(size)
+//#define myrelease(ptr) PoolAllocator::Release(ptr)
+//#else
+//#define myalloc(size) BaseAllocator::Alloc(size)
+//#define myrelease(ptr) BaseAllocator::Release(ptr)
+//#endif
 
 //---------------------------
 //			Crash
