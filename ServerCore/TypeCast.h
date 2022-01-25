@@ -187,7 +187,7 @@ template<typename To, typename From>
 bool CanCast(From* ptr)
 {
 	if (ptr == nullptr)
-		return true;
+		return false;
 
 	using TL = typename From::TL;
 
@@ -198,7 +198,7 @@ template<typename To, typename From>
 bool CanCast(shared_ptr<From> ptr)
 {
 	if (ptr == nullptr)
-		return true;
+		return false;
 
 	using TL = typename From::TL;
 
