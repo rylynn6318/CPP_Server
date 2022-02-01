@@ -22,7 +22,7 @@ public:
 	static auto SetTcpNoDelay(SOCKET socket, bool flag)->bool;
 
 	// ListenSocket의 특성을 ClientSocket에 그대로 적용
-	static auto SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket);
+	static auto SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket)->bool;
 
 	static auto Bind(SOCKET socket, NetAddress netAddr)->bool;
 	static auto BindAnyAddress(SOCKET socket, uint16 port)->bool;

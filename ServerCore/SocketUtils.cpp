@@ -63,7 +63,7 @@ auto SocketUtils::SetTcpNoDelay(SOCKET socket, bool flag) -> bool
 	return SetSockOpt(socket, SOL_SOCKET, TCP_NODELAY, flag);
 }
 
-auto SocketUtils::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket)
+auto SocketUtils::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket) -> bool
 {
 	return SetSockOpt(socket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, listenSocket);
 }
