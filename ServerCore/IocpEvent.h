@@ -17,10 +17,10 @@ public:
 	IocpEvent(EventType type);
 
 	auto Init()->void;
-	auto GetType()->EventType { return _type; }
 
-protected:
-	EventType _type;
+public:
+	EventType eventType;
+	IocpObjectRef owner;
 };
 
 class ConnectEvent :public IocpEvent
@@ -34,11 +34,8 @@ class AcceptEvent :public IocpEvent
 public:
 	AcceptEvent() : IocpEvent(EventType::Accept) {}
 
-	auto SetSession(Session* session) { _session = session; }
-	auto GetSession()->Session* { return _session; }
-
-private:
-	Session* _session = nullptr;
+public:
+	SessionRef session = nullptr;
 };
 
 class RecvEvent :public IocpEvent
