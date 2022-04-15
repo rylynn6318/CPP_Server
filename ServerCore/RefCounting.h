@@ -19,7 +19,7 @@ public:
 	}
 
 protected:
-	atomic<int32> _refCount;
+	std::atomic<int32> _refCount;
 };
 
 template<typename T>

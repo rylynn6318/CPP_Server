@@ -170,7 +170,7 @@ To TypeCast(From* ptr)
 }
 
 template<typename To, typename From>
-shared_ptr<To> TypeCast(shared_ptr<From> ptr)
+std::shared_ptr<To> TypeCast(std::shared_ptr<From> ptr)
 {
 	if (ptr == nullptr)
 		return nullptr;
@@ -195,7 +195,7 @@ bool CanCast(From* ptr)
 }
 
 template<typename To, typename From>
-bool CanCast(shared_ptr<From> ptr)
+bool CanCast(std::shared_ptr<From> ptr)
 {
 	if (ptr == nullptr)
 		return false;

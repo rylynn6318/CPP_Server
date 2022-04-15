@@ -19,7 +19,7 @@ auto ThreadManager::Launch(std::function<void(void)> callback) -> void
 	LockGuard guard(_lock);
 
 
-	_threads.push_back(thread([=]()
+	_threads.push_back(std::thread([=]()
 		{
 			InitTLS();
 			callback();
@@ -29,7 +29,7 @@ auto ThreadManager::Launch(std::function<void(void)> callback) -> void
 
 auto ThreadManager::Join() -> void
 {
-	for (thread& t : _threads)
+	for (std::thread& t : _threads)
 	{
 		if (t.joinable())
 			t.join();

@@ -20,7 +20,7 @@ public:
 	auto Release(void* ptr)->void;
 
 private:
-	vector<MemoryPool*> _pools;
+	std::vector<MemoryPool*> _pools;
 	MemoryPool* _poolTable[MAX_ALLOC_SIZE + 1];
 };
 
@@ -40,7 +40,7 @@ void xdelete(Type* obj)
 }
 
 template<typename Type, typename ...Args>
-shared_ptr<Type> MakeShared(Args&&... args)
+std::shared_ptr<Type> MakeShared(Args&&... args)
 {
-	return shared_ptr<Type>{xnew<Type>(std::forward<Args>(args)...), xdelete<Type>};
+	return std::shared_ptr<Type>{xnew<Type>(std::forward<Args>(args)...), xdelete<Type>};
 }

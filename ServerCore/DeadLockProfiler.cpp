@@ -25,7 +25,7 @@ void DeadLockProfiler::PushLock(const char* name)
 		const int32 prevId = _lockStack.top();
 		if (lockId != prevId)
 		{
-			set<int32>& history = _lockHistory[prevId];
+			std::set<int32>& history = _lockHistory[prevId];
 			if (history.find(lockId) == history.end())
 			{
 				history.insert(lockId);
@@ -53,10 +53,10 @@ void DeadLockProfiler::PopLock(const char* name)
 void DeadLockProfiler::CheckCycle()
 {
 	const int32 lockCount = static_cast<int32>(_nameToId.size());
-	_discoveredOrder = vector<int32>(lockCount, -1);
+	_discoveredOrder = std::vector<int32>(lockCount, -1);
 	_discoveredCount = 0;
-	_finished = vector<bool>(lockCount, false);
-	_parent = vector<int32>(lockCount, -1);
+	_finished = std::vector<bool>(lockCount, false);
+	_parent = std::vector<int32>(lockCount, -1);
 
 	for (int32 lockId = 0; lockId < lockCount; lockId++)
 		Dfs(lockId);
@@ -81,7 +81,7 @@ void DeadLockProfiler::Dfs(int32 here)
 		return;
 	}
 
-	set<int32>& nextSet = findIt->second;
+	std::set<int32>& nextSet = findIt->second;
 	for (int32 there : nextSet)
 	{
 		if (_discoveredOrder[here] == -1)

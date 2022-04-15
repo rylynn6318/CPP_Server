@@ -119,7 +119,7 @@ auto Listener::ProcessAccept(AcceptEvent* acceptEvent) -> void
 
 	session->SetNetAddress(NetAddress(sockAddress));
 
-	cout << "Client Connected!" << endl;
+	std::cout << "Client Connected!" << std::endl;
 
 	// TODO
 

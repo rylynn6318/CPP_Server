@@ -17,16 +17,16 @@ private:
 	void Dfs(int32 here);
 
 private:
-	unordered_map<const char*, int32> _nameToId;
-	unordered_map<int32, const char*> _idToName;
-	stack<int32> _lockStack;
-	map<int32, set<int32>> _lockHistory;
+	std::unordered_map<const char*, int32> _nameToId;
+	std::unordered_map<int32, const char*> _idToName;
+	std::stack<int32> _lockStack;
+	std::map<int32, std::set<int32>> _lockHistory;
 
 	Mutex _lock;
 
 private:
-	vector<int32> _discoveredOrder;	//발견 순서 기록하는 배열
+	std::vector<int32> _discoveredOrder;	//발견 순서 기록하는 배열
 	int32 _discoveredCount = 0;	//노드가 발견된 순서
-	vector<bool> _finished;	//Dfs(i)가 종료 되었는지 여부
-	vector<int32> _parent;
+	std::vector<bool> _finished;	//Dfs(i)가 종료 되었는지 여부
+	std::vector<int32> _parent;
 };
