@@ -6,17 +6,18 @@ enum
 };
 
 DECLSPEC_ALIGN(SLIST_ALIGNMENT)
-struct MemoryHeader : public SLIST_ENTRY
+class MemoryHeader : public SLIST_ENTRY
 {
+public:
 	MemoryHeader(int32 size) : allocSize(size) {}
 
-	static void* AttachHeader(MemoryHeader* header, int32 size)
+	static auto AttachHeader(MemoryHeader* header, int32 size) -> void*
 	{
 		new(header)MemoryHeader(size);
 		return reinterpret_cast<void*>(++header);
 	}
 
-	static MemoryHeader* DetachHeader(void* ptr)
+	static auto DetachHeader(void* ptr) -> MemoryHeader*
 	{
 		MemoryHeader* header = reinterpret_cast<MemoryHeader*>(ptr) - 1;
 		return header;

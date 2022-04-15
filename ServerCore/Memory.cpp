@@ -47,7 +47,9 @@ Memory::Memory()
 Memory::~Memory()
 {
 	for (MemoryPool* pool : _pools)
+	{
 		delete pool;
+	}
 
 	_pools.clear();
 }
