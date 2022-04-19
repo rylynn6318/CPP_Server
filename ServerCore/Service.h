@@ -1,8 +1,10 @@
 #pragma once
 #include "NetAddress.h"
-#include "IocpCore.h"
-#include "Listener.h"
 #include <functional>
+
+class Session;
+class IocpCore;
+class Listener;
 
 enum class ServiceType : uint8
 {
@@ -10,61 +12,59 @@ enum class ServiceType : uint8
 	Client
 };
 
-using SessionFactory = std::function<SessionRef(void)>;
-
 class Service : public std::enable_shared_from_this<Service>
 {
 public:
-	Service(ServiceType type, NetAddress address, IocpCoreRef core, SessionFactory factory, int32 maxSessionCount = 1);
+	Service(ServiceType type, NetAddress address, std::shared_ptr<IocpCore> core, std::function<std::shared_ptr<Session>(void)> factory, int32 maxSessionCount = 1);
 	virtual ~Service();
 
-	virtual auto Start()->bool abstract;
-	virtual auto CloseService()->void;
+	virtual auto Start() -> bool = 0;
+	virtual auto CloseService() -> void;
 
 public:
-	auto CanStart()->bool;
-	auto SetSessionFactory(SessionFactory func);
-	auto CreateSession()->SessionRef;
-	auto AddSession(SessionRef session)->void;
-	auto ReleaseSession(SessionRef session)->void;
-	auto GetCurrentSessionCount()->int32;
-	auto GetMaxSessionCount()->int32;
-	auto GetServiceType()->ServiceType;
-	auto GetNetAddress()->NetAddress;
-	auto GetIocpCore()->IocpCoreRef&;
+	auto CanStart() -> bool;
+	auto SetSessionFactory(std::function<std::shared_ptr<Session>(void)> func) -> void;
+	auto CreateSession() -> std::shared_ptr<Session>;
+	auto AddSession(std::shared_ptr<Session> session) -> void;
+	auto ReleaseSession(std::shared_ptr<Session> session) -> void;
+	auto GetCurrentSessionCount() -> int32;
+	auto GetMaxSessionCount() -> int32;
+	auto GetServiceType() -> ServiceType;
+	auto GetNetAddress() -> NetAddress;
+	auto GetIocpCore() -> std::shared_ptr<IocpCore>&;
 
 protected:
 	USE_LOCK;
 
 	ServiceType _type;
 	NetAddress _netAddress{};
-	IocpCoreRef _iocpCore;
+	std::shared_ptr<IocpCore> _iocpCore;
 
-	Set<SessionRef> _sessions;
+	Set<std::shared_ptr<Session>> _sessions;
 	int32 _sessionCount{ 0 };
 	int32 _maxSessionCount{ 0 };
-	SessionFactory _sessionFactory;
+	std::function<std::shared_ptr<Session>(void)> _sessionFactory;
 };
 
 
 class ClientService : public Service
 {
 public:
-	ClientService(NetAddress targetAddress, IocpCoreRef core, SessionFactory factory, int32 maxSessionCount = 1);
+	ClientService(NetAddress targetAddress, std::shared_ptr<IocpCore> core, std::function<std::shared_ptr<Session>(void)> factory, int32 maxSessionCount = 1);
 	virtual ~ClientService() = default;
 
-	virtual auto Start()->bool override;
+	virtual auto Start() -> bool override;
 };
 
 class ServerService : public Service
 {
 public:
-	ServerService(NetAddress targetAddress, IocpCoreRef core, SessionFactory factory, int32 maxSessionCount = 1);
+	ServerService(NetAddress targetAddress, std::shared_ptr<IocpCore> core, std::function<std::shared_ptr<Session>(void)> factory, int32 maxSessionCount = 1);
 	virtual ~ServerService() = default;
 
-	virtual auto Start()->bool override;
-	virtual auto CloseService()->void;
+	virtual auto Start() -> bool override;
+	virtual auto CloseService() -> void;
 
 private:
-	ListenerRef _listener = nullptr;
+	std::shared_ptr<Listener> _listener{ nullptr };
 };

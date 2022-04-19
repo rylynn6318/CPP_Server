@@ -7,7 +7,7 @@ class ObjectPool
 {
 public:
 	template<typename... Args>
-	static Type* Pop(Args&&... args)
+	static auto Pop(Args&&... args) -> Type*
 	{
 #ifdef _STOMP
 		MemoryHeader* ptr = reinterpret_cast<MemoryHeader*>(StompAllocator::Alloc(s_allocSize));
@@ -19,7 +19,7 @@ public:
 		return memory;
 	}
 
-	static void Push(Type* obj)
+	static auto Push(Type* obj)
 	{
 		obj->~Type();
 #ifdef _STOMP
@@ -30,7 +30,7 @@ public:
 	}
 
 	template<typename... Args>
-	static std::shared_ptr<Type> MakeShared(Args&&... args)
+	static auto MakeShared(Args&&... args) -> std::shared_ptr<Type>
 	{
 		std::shared_ptr<Type> ptr = { Pop(std::forward<Args>(args)...),Push };
 		return ptr;

@@ -1,4 +1,5 @@
 #pragma once
+#include "IocpCore.h"
 
 class Session;
 
@@ -16,11 +17,11 @@ class IocpEvent : public OVERLAPPED
 public:
 	IocpEvent(EventType type);
 
-	auto Init()->void;
+	auto Init() -> void;
 
 public:
 	EventType eventType;
-	IocpObjectRef owner;
+	std::shared_ptr<IocpObject> owner;
 };
 
 class ConnectEvent :public IocpEvent
@@ -35,7 +36,7 @@ public:
 	AcceptEvent() : IocpEvent(EventType::Accept) {}
 
 public:
-	SessionRef session = nullptr;
+	std::shared_ptr<Session> session{ nullptr };
 };
 
 class RecvEvent :public IocpEvent

@@ -9,7 +9,7 @@
 void HandleError(const char* cause)
 {
 	int32 errCode = ::WSAGetLastError();
-	cout << cause << " ErrorCode : " << errCode << endl;
+	std::cout << cause << " ErrorCode : " << errCode << std::endl;
 }
 
 int main()
@@ -48,7 +48,7 @@ int main()
 		}
 	}
 
-	cout << "Connected to Server!" << endl;
+	std::cout << "Connected to Server!" << std::endl;
 
 	char sendBuffer[100] = "Hello World";
 	WSAEVENT wsaEvent = ::WSACreateEvent();
@@ -79,9 +79,9 @@ int main()
 			}
 		}
 
-		cout << "Send Data ! Len = " << sizeof(sendBuffer) << endl;
+		std::cout << "Send Data ! Len = " << sizeof(sendBuffer) << std::endl;
 
-		this_thread::sleep_for(1s);
+		std::this_thread::sleep_for(1s);
 	}
 
 	// 소켓 리소스 반환

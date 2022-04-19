@@ -70,7 +70,7 @@ auto SocketUtils::SetUpdateAcceptSocket(SOCKET socket, SOCKET listenSocket) -> b
 
 auto SocketUtils::Bind(SOCKET socket, NetAddress netAddr) -> bool
 {
-	return SOCKET_ERROR != ::bind(socket, reinterpret_cast<const SOCKADDR*>(&netAddr.GetASockAddr()), sizeof(SOCKADDR_IN));
+	return SOCKET_ERROR != ::bind(socket, reinterpret_cast<const SOCKADDR*>(&netAddr.GetSockAddr()), sizeof(SOCKADDR_IN));
 }
 
 auto SocketUtils::BindAnyAddress(SOCKET socket, uint16 port) -> bool

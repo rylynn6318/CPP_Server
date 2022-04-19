@@ -163,7 +163,7 @@ To TypeCast(From* ptr)
 
 	using TL = typename From::TL;
 
-	if (TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, remove_pointer_t<To>>::value))
+	if (TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, std::remove_pointer_t<To>>::value))
 		return static_cast<To>(ptr);
 
 	return nullptr;
@@ -177,8 +177,8 @@ std::shared_ptr<To> TypeCast(std::shared_ptr<From> ptr)
 
 	using TL = typename From::TL;
 
-	if (TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, remove_pointer_t<To>>::value))
-		return static_pointer_cast<To>(ptr);
+	if (TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, std::remove_pointer_t<To>>::value))
+		return std::static_pointer_cast<To>(ptr);
 
 	return nullptr;
 }
@@ -191,7 +191,7 @@ bool CanCast(From* ptr)
 
 	using TL = typename From::TL;
 
-	return	TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, remove_pointer_t<To>>::value);
+	return	TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, std::remove_pointer_t<To>>::value);
 }
 
 template<typename To, typename From>
@@ -202,7 +202,7 @@ bool CanCast(std::shared_ptr<From> ptr)
 
 	using TL = typename From::TL;
 
-	return	TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, remove_pointer_t<To>>::value);
+	return	TypeConversion<TL>::CanConvert(ptr->_typeId, IndexOf <TL, std::remove_pointer_t<To>>::value);
 }
 
 #pragma endregion

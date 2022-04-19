@@ -16,8 +16,8 @@ public:
 	Memory();
 	~Memory();
 
-	auto Allocate(int32 size)->void*;
-	auto Release(void* ptr)->void;
+	auto Allocate(int32 size) -> void*;
+	auto Release(void* ptr) -> void;
 
 private:
 	std::vector<MemoryPool*> _pools;
@@ -25,7 +25,7 @@ private:
 };
 
 template<typename Type, typename ...Args>
-Type* xnew(Args&&... args)
+auto xnew(Args&&... args) -> Type*
 {
 	Type* memory = static_cast<Type*>(PoolAllocator::Alloc(sizeof(Type)));
 	new(memory)Type(std::forward<Args>(args)...);
@@ -33,14 +33,14 @@ Type* xnew(Args&&... args)
 }
 
 template<typename Type>
-void xdelete(Type* obj)
+auto xdelete(Type* obj) -> void
 {
 	obj->~Type();
 	PoolAllocator::Release(obj);
 }
 
 template<typename Type, typename ...Args>
-std::shared_ptr<Type> MakeShared(Args&&... args)
+ auto MakeShared(Args&&... args) -> std::shared_ptr<Type>
 {
 	return std::shared_ptr<Type>{xnew<Type>(std::forward<Args>(args)...), xdelete<Type>};
 }

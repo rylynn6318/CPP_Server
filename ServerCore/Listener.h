@@ -12,20 +12,20 @@ public:
 	~Listener();
 
 public:
-	auto StartAccept(ServerServiceRef service)->bool;
-	auto CloseSocket()->void;
+	auto StartAccept(std::shared_ptr<ServerService> service) -> bool;
+	auto CloseSocket() -> void;
 
 public:
-	virtual auto GetHandle()->HANDLE override;
-	virtual auto Dispatch(class IocpEvent* iocpEvent, int32 numOfBytes = 0)->void override;
+	virtual auto GetHandle() -> HANDLE override;
+	virtual auto Dispatch(class IocpEvent* iocpEvent, int32 numOfBytes = 0) -> void override;
 
 private:
-	auto RegisterAccept(AcceptEvent* acceptEvent)->void;
-	auto ProcessAccept(AcceptEvent* acceptEvent)->void;
+	auto RegisterAccept(AcceptEvent* acceptEvent) -> void;
+	auto ProcessAccept(AcceptEvent* acceptEvent) -> void;
 
 protected:
-	SOCKET _socket = INVALID_SOCKET;
+	SOCKET _socket{ INVALID_SOCKET };
 	Vector<AcceptEvent*> _acceptEvents;
-	ServerServiceRef _service;
+	std::shared_ptr<ServerService> _service;
 };
 

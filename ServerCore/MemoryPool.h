@@ -33,13 +33,13 @@ public:
 	MemoryPool(int32 allocSize);
 	~MemoryPool();
 
-	auto Push(MemoryHeader* ptr)->void;
-	auto Pop()->MemoryHeader*;
+	auto Push(MemoryHeader* ptr) -> void;
+	auto Pop() -> MemoryHeader*;
 
 private:
 	SLIST_HEADER _header;
-	int32 _allocSize = 0;
-	std::atomic<int32> _useCount = 0;
-	std::atomic<int32> _reserveCount = 0;
+	int32 _allocSize{0};
+	std::atomic<int32> _useCount{0};
+	std::atomic<int32> _reserveCount{0};
 };
 
