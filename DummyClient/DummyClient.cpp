@@ -1,92 +1,69 @@
 ﻿#include "pch.h"
 #include <iostream>
+#include "ThreadManager.h"
+#include "Service.h"
+#include "Session.h"
 
-#include <winsock2.h>
-#include <mswsock.h>
-#include <ws2tcpip.h>
-#pragma comment(lib, "ws2_32.lib")
+char SendBuffer[] = "Hello World!";
 
-void HandleError(const char* cause)
+class ServerSession :public Session
 {
-	int32 errCode = ::WSAGetLastError();
-	std::cout << cause << " ErrorCode : " << errCode << std::endl;
-}
+public:
+	~ServerSession()
+	{
+		std::cout << "~ServerSession" << std::endl;
+	}
+
+	virtual auto OnConnected() -> void override
+	{
+		std::cout << "Connected to Server" << std::endl;
+		Send((BYTE*)SendBuffer, sizeof(SendBuffer));
+	}
+
+	virtual auto OnDisconnected() -> void override
+	{
+		std::cout << "Disconnected" << std::endl;
+	}
+
+	virtual auto OnRecv(BYTE* buffer, int32 len)->int32 override
+	{
+		std::cout << "OnRecv Len = " << len << std::endl;
+		
+		std::this_thread::sleep_for(1s);
+
+		Send((BYTE*)SendBuffer, sizeof(SendBuffer));
+		return len;
+	}
+
+	virtual auto OnSend(int32 len) ->void override
+	{
+		std::cout << "OnSend Len = " << len << std::endl;
+	}
+};
 
 int main()
 {
-	WSAData wsaData;
-	if (::WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-		return 0;
+	std::this_thread::sleep_for(1s);
 
-	SOCKET clientSocket = ::socket(AF_INET, SOCK_STREAM, 0);
-	if (clientSocket == INVALID_SOCKET)
-		return 0;
+	std::shared_ptr<ClientService> service = MakeShared<ClientService>(
+		NetAddress(L"127.0.0.1", 7777),
+		MakeShared<IocpCore>(),
+		MakeShared<ServerSession>,
+		1
+		);
 
-	u_long on = 1;
-	if (::ioctlsocket(clientSocket, FIONBIO, &on) == INVALID_SOCKET)
-		return 0;
+	ASSERT_CRASH(service->Start());
 
-	SOCKADDR_IN serverAddr;
-	::memset(&serverAddr, 0, sizeof(serverAddr));
-	serverAddr.sin_family = AF_INET;
-	::inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-	serverAddr.sin_port = ::htons(7777);
-
-	// Connect
-	while (true)
+	for (int32 i = 0; i < 2; i++)
 	{
-		if (::connect(clientSocket, (SOCKADDR*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
-		{
-			// 원래 블록했어야 했는데... 너가 논블로킹으로 하라며?
-			if (::WSAGetLastError() == WSAEWOULDBLOCK)
-				continue;
-			// 이미 연결된 상태라면 break
-			if (::WSAGetLastError() == WSAEISCONN)
-				break;
-			// Error
-			break;
-		}
+		GThreadManager->Launch([=]()
+			{
+				while (true)
+				{
+					service->GetIocpCore()->Dispatch();
+				}
+			});
 	}
 
-	std::cout << "Connected to Server!" << std::endl;
-
-	char sendBuffer[100] = "Hello World";
-	WSAEVENT wsaEvent = ::WSACreateEvent();
-	WSAOVERLAPPED overlapped = {};
-	overlapped.hEvent = wsaEvent;
-
-	// Send
-	while (true)
-	{
-		WSABUF wsaBuf;
-		wsaBuf.buf = sendBuffer;
-		wsaBuf.len = 100;
-
-		DWORD sendLen = 0;
-		DWORD flags = 0;
-		if (::WSASend(clientSocket, &wsaBuf, 1, &sendLen, flags, &overlapped, nullptr) == SOCKET_ERROR)
-		{
-			if (::WSAGetLastError() == WSA_IO_PENDING)
-			{
-				// Pending
-				::WSAWaitForMultipleEvents(1, &wsaEvent, TRUE, WSA_INFINITE, FALSE);
-				::WSAGetOverlappedResult(clientSocket, &overlapped, &sendLen, FALSE, &flags);
-			}
-			else
-			{
-				// 진짜 문제 있는 상황
-				break;
-			}
-		}
-
-		std::cout << "Send Data ! Len = " << sizeof(sendBuffer) << std::endl;
-
-		std::this_thread::sleep_for(1s);
-	}
-
-	// 소켓 리소스 반환
-	::closesocket(clientSocket);
-
-	// 윈속 종료
-	::WSACleanup();
+	GThreadManager->Join();
 }

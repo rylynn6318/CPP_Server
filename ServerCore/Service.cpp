@@ -31,6 +31,7 @@ auto Service::SetSessionFactory(std::function<std::shared_ptr<Session>(void)> fu
 auto Service::CreateSession() -> std::shared_ptr<Session>
 {
 	std::shared_ptr<Session> session = _sessionFactory();
+	session->SetService(shared_from_this());
 
 	if (_iocpCore->Register(session) == false)
 		return nullptr;
@@ -84,7 +85,17 @@ ClientService::ClientService(NetAddress targetAddress, std::shared_ptr<IocpCore>
 
 auto ClientService::Start() -> bool
 {
-	// TODO
+	if (CanStart() == false)
+		return false;
+
+	const int32 sessionCount = GetMaxSessionCount();
+	for (int32 i = 0; i < sessionCount; i++)
+	{
+		std::shared_ptr<Session> session = CreateSession();
+		if (session->Connect() == false)
+			return false;
+	}
+
 	return true;
 }
 
