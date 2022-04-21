@@ -57,7 +57,6 @@ class SendEvent :public IocpEvent
 public:
 	SendEvent() : IocpEvent(EventType::Send) {}
 
-	// TEMP
-	std::vector<BYTE> buffer;
+	Vector<std::shared_ptr<SendBuffer>> sendBuffers;
 };
 

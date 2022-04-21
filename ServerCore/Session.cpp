@@ -4,7 +4,7 @@
 #include "Service.h"
 #include "IocpEvent.h"
 
-Session::Session()
+Session::Session() : _recvBuffer(BUFFER_SIZE)
 {
 	_socket = SocketUtils::CreateSocket();
 }
@@ -14,16 +14,14 @@ Session::~Session()
 	SocketUtils::Close(_socket);
 }
 
-auto Session::Send(BYTE* buffer, int32 len) -> void
+auto Session::Send(std::shared_ptr<SendBuffer> sendBuffer) -> void
 {
-	// TEMP
-	SendEvent* sendEvent = xnew<SendEvent>();
-	sendEvent->owner = shared_from_this(); //Rec Count ++
-	sendEvent->buffer.resize(len);
-	::memcpy(sendEvent->buffer.data(), buffer, len);
-
 	WRITE_LOCK;
-	RegisterSend(sendEvent);
+
+	_sendQueue.push(sendBuffer);
+
+	if (_sendRegisterd.exchange(true) == false)
+		RegisterSend();
 }
 
 auto Session::Connect() -> bool
@@ -100,7 +98,7 @@ auto Session::Dispatch(IocpEvent* iocpEvent, int32 numOfBytes) -> void
 		ProcessRecv(numOfBytes);
 		break;
 	case EventType::Send:
-		ProcessSend(static_cast<SendEvent*>(iocpEvent), numOfBytes);
+		ProcessSend(numOfBytes);
 		break;
 	default:
 		break;
@@ -167,8 +165,8 @@ auto Session::RegisterRecv() -> void
 	_recvEvent.owner = shared_from_this(); // WSARecv가 끝나기전까지 메모리해제되지 않도록 RefCount + 1
 
 	WSABUF wsaBuf;
-	wsaBuf.buf = reinterpret_cast<char*>(_recvBuffer);
-	wsaBuf.len = len32(_recvBuffer);
+	wsaBuf.buf = reinterpret_cast<char*>(_recvBuffer.WritePos());
+	wsaBuf.len = _recvBuffer.FreeSize();
 	DWORD numOfBytes{ 0 };
 	DWORD flags{ 0 };
 
@@ -183,24 +181,52 @@ auto Session::RegisterRecv() -> void
 	}
 }
 
-auto Session::RegisterSend(SendEvent* sendEvent) -> void
+auto Session::RegisterSend() -> void
 {
 	if (IsConnected() == false)
 		return;
 
-	WSABUF wsaBuf;
-	wsaBuf.buf = (char*)sendEvent->buffer.data();
-	wsaBuf.len = (ULONG)sendEvent->buffer.size();
+	_sendEvent.Init();
+	_sendEvent.owner = shared_from_this(); // WSASend가 끝나기전까지 메모리해제되지 않도록 RefCount + 1
+
+	// 보낼 데이터를 SendEvent에 등록
+	{
+		WRITE_LOCK;
+
+		int32 writeSize{ 0 };
+		while (_sendQueue.empty() == false)
+		{
+			std::shared_ptr<SendBuffer> sendBuffer = _sendQueue.front();
+
+			writeSize += sendBuffer->WriteSize();
+			// TODO : 예외 체크
+
+			_sendQueue.pop();
+			_sendEvent.sendBuffers.push_back(sendBuffer);
+		}
+	}
+
+	// Scatter-Gather
+	Vector<WSABUF> wsaBufs;
+	wsaBufs.reserve(_sendEvent.sendBuffers.size());
+	for (std::shared_ptr<SendBuffer> sendBuffer : _sendEvent.sendBuffers)
+	{
+		WSABUF wsaBuf;
+		wsaBuf.buf = reinterpret_cast<char*>(sendBuffer->Buffer());
+		wsaBuf.len = static_cast<LONG>(sendBuffer->WriteSize());
+		wsaBufs.push_back(wsaBuf);
+	}
 
 	DWORD numOfBytes{ 0 };
-	if (SOCKET_ERROR == ::WSASend(_socket, &wsaBuf, 1, OUT & numOfBytes, 0, sendEvent, nullptr))
+	if (SOCKET_ERROR == ::WSASend(_socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), OUT &numOfBytes, 0, &_sendEvent, nullptr))
 	{
 		int32 errorCode = ::WSAGetLastError();
 		if (errorCode != WSA_IO_PENDING)
 		{
 			HandleError(errorCode);
-			sendEvent->owner = nullptr;
-			xdelete(sendEvent);
+			_sendEvent.owner = nullptr; // Ref Count -1
+			_sendEvent.sendBuffers.clear(); // Ref Count -1
+			_sendRegisterd.store(false);
 		}
 	}
 }
@@ -235,17 +261,32 @@ auto Session::ProcessRecv(int32 numOfBytes) -> void
 		return;
 	}
 
+	if (_recvBuffer.OnWrite(numOfBytes) == false)
+	{
+		Disconnect(L"OnWrite Overflow");
+		return;
+	}
+
+	int32 dataSize = _recvBuffer.DataSize();
+
 	// 컨텐츠 코드에서 구현
-	OnRecv(_recvBuffer, numOfBytes);
+	int32 processLength = OnRecv(_recvBuffer.ReadPos(), dataSize);
+	if (processLength < 0 || dataSize < processLength || _recvBuffer.OnRead(processLength) == false)
+	{
+		Disconnect(L"OnRead Overflow");
+		return;
+	}
+
+	_recvBuffer.Clean();
 
 	// 수신 등록
 	RegisterRecv();
 }
 
-auto Session::ProcessSend(SendEvent* sendEvent, int32 numOfBytes) -> void
+auto Session::ProcessSend(int32 numOfBytes) -> void
 {
-	sendEvent->owner = nullptr; // Ref Count -1
-	xdelete(sendEvent);
+	_sendEvent.owner = nullptr; // Ref Count -1
+	_sendEvent.sendBuffers.clear(); // Ref Count -1
 
 	if (numOfBytes == 0)
 	{
@@ -255,6 +296,16 @@ auto Session::ProcessSend(SendEvent* sendEvent, int32 numOfBytes) -> void
 
 	// 컨텐츠 코드에서 구현
 	OnSend(numOfBytes);
+
+	WRITE_LOCK;
+	if (_sendQueue.empty())
+	{
+		_sendRegisterd.store(false);
+	}
+	else
+	{
+		RegisterSend();
+	}
 }
 
 auto Session::HandleError(int32 errorCode) -> void
@@ -264,6 +315,7 @@ auto Session::HandleError(int32 errorCode) -> void
 	case WSAECONNRESET:
 	case WSAECONNABORTED:
 		Disconnect(L"HandleError");
+		break;
 	default:
 		// TODO : 로그 구체화
 		std::cout << "Handle Error : " << errorCode << std::endl;

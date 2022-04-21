@@ -2,6 +2,7 @@
 #include "IocpCore.h"
 #include "IocpEvent.h"
 #include "NetAddress.h"
+#include "RecvBuffer.h"
 
 class Service;
 
@@ -11,12 +12,14 @@ class Session : public IocpObject
 	friend class IocpCore;
 	friend class Service;
 
+	enum { BUFFER_SIZE = 0x10000 };
+
 public:
 	Session();
 	virtual ~Session();
 
 public:
-	auto Send(BYTE* buffer, int32 len) -> void;
+	auto Send(std::shared_ptr<SendBuffer> sendBuffer) -> void;
 	auto Connect() -> bool;
 	auto Disconnect(const WCHAR* cause) -> void;
 	auto GetService() -> std::shared_ptr<Service>;
@@ -38,11 +41,11 @@ private:
 	auto RegisterConnect() -> bool;
 	auto RegisterDisconnect() -> bool;
 	auto RegisterRecv() -> void;
-	auto RegisterSend(SendEvent* sendEvent) -> void;
+	auto RegisterSend() -> void;
 	auto ProcessConnect() -> void;
 	auto ProcessDisconnect() -> void;
 	auto ProcessRecv(int32 numOfBytes) -> void;
-	auto ProcessSend(SendEvent* sendEvent, int32 numOfBytes) -> void;
+	auto ProcessSend(int32 numOfBytes) -> void;
 	auto HandleError(int32 errorCode) -> void;
 
 protected:
@@ -51,10 +54,6 @@ protected:
 	virtual auto OnRecv(BYTE* buffer, int32 len) -> int32 { return len; }
 	virtual auto OnSend(int32 len) -> void {}
 	virtual auto OnDisconnected() -> void {}
-
-public:
-	// TEMP
-	BYTE _recvBuffer[1000];
 
 private:
 	std::weak_ptr<Service> _service;
@@ -66,9 +65,11 @@ private:
 	USE_LOCK;
 
 	// 수신 관련
-
+	RecvBuffer _recvBuffer;
 
 	// 송신 관련
+	Queue<std::shared_ptr<SendBuffer>> _sendQueue;
+	Atomic<bool> _sendRegisterd{ false };
 
 private:
 	// IocpEvent 재사용
@@ -76,5 +77,6 @@ private:
 	DisonnectEvent _disconnectEvent;
 	ConnectEvent _connectEvent;
 	RecvEvent _recvEvent;
+	SendEvent _sendEvent;
 };
 

@@ -19,10 +19,10 @@ void DeadLockProfiler::PushLock(const char* name)
 		lockId = findIt->second;
 	}
 
-	//잡고 있는 락이 있었다면
-	if (_lockStack.empty() == false)
+	// 잡고 있는 락이 있었다면
+	if (LLockStack.empty() == false)
 	{
-		const int32 prevId = _lockStack.top();
+		const int32 prevId = LLockStack.top();
 		if (lockId != prevId)
 		{
 			std::set<int32>& history = _lockHistory[prevId];
@@ -33,21 +33,22 @@ void DeadLockProfiler::PushLock(const char* name)
 			}
 		}
 	}
-	_lockStack.push(lockId);
+
+	LLockStack.push(lockId);
 }
 
 void DeadLockProfiler::PopLock(const char* name)
 {
 	LockGuard guard(_lock);
 
-	if (_lockStack.empty())
+	if (LLockStack.empty())
 		CRASH("MULTIPLE_UNLOCK");
 
 	int32 lockId = _nameToId[name];
-	if (_lockStack.top() != lockId)
+	if (LLockStack.top() != lockId)
 		CRASH("INVALID_UNLOCK");
 
-	_lockStack.pop();
+	LLockStack.pop();
 }
 
 void DeadLockProfiler::CheckCycle()
@@ -84,18 +85,18 @@ void DeadLockProfiler::Dfs(int32 here)
 	std::set<int32>& nextSet = findIt->second;
 	for (int32 there : nextSet)
 	{
-		if (_discoveredOrder[here] == -1)
+		if (_discoveredOrder[there] == -1)
 		{
 			_parent[there] = here;
 			Dfs(there);
 			continue;
 		}
 
-		//here가 there보다 먼저 발견되었다면, there는 here의 후손. (순방향 간선)
-		if(_discoveredOrder[here]<_discoveredOrder[there])
+		// here가 there보다 먼저 발견되었다면, there는 here의 후손. (순방향 간선)
+		if (_discoveredOrder[here] < _discoveredOrder[there])
 			continue;
 
-		//순방향X, Dfs(there)가 아직 종료하지 않았다면, there는 here의 선조이다. (역방향 간선)
+		// 순방향X, Dfs(there)가 아직 종료하지 않았다면, there는 here의 선조이다. (역방향 간선)
 		if (_finished[there] == false)
 		{
 			printf("%s -> %s\n", _idToName[here], _idToName[there]);

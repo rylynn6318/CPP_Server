@@ -19,4 +19,6 @@
 #include "TypeCast.h"
 #include "Memory.h"
 
+#include "SendBuffer.h"
+
 using namespace std::chrono_literals;

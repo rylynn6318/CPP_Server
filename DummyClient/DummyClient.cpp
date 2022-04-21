@@ -4,7 +4,7 @@
 #include "Service.h"
 #include "Session.h"
 
-char SendBuffer[] = "Hello World!";
+char sendData[] = "Hello World!";
 
 class ServerSession :public Session
 {
@@ -17,7 +17,10 @@ public:
 	virtual auto OnConnected() -> void override
 	{
 		std::cout << "Connected to Server" << std::endl;
-		Send((BYTE*)SendBuffer, sizeof(SendBuffer));
+
+		std::shared_ptr<SendBuffer> sendBuffer = MakeShared<SendBuffer>(4096);
+		sendBuffer->CopyData(sendData, sizeof(sendData));
+		Send(sendBuffer);
 	}
 
 	virtual auto OnDisconnected() -> void override
@@ -31,7 +34,10 @@ public:
 		
 		std::this_thread::sleep_for(1s);
 
-		Send((BYTE*)SendBuffer, sizeof(SendBuffer));
+		std::shared_ptr<SendBuffer> sendBuffer = MakeShared<SendBuffer>(4096);
+		sendBuffer->CopyData(sendData, sizeof(sendData));
+		Send(sendBuffer);
+
 		return len;
 	}
 

@@ -82,7 +82,7 @@ auto Listener::RegisterAccept(AcceptEvent* acceptEvent) -> void
 	DWORD bytesReceived = 0;
 	if (false == SocketUtils::AcceptEx(
 		_socket, session->GetSocket(),
-		session->_recvBuffer,
+		session->_recvBuffer.WritePos(),
 		0,
 		sizeof(SOCKADDR_IN) + 16,
 		sizeof(SOCKADDR_IN) + 16,
