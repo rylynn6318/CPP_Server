@@ -18,8 +18,10 @@ public:
 	{
 		std::cout << "Connected to Server" << std::endl;
 
-		std::shared_ptr<SendBuffer> sendBuffer = MakeShared<SendBuffer>(4096);
-		sendBuffer->CopyData(sendData, sizeof(sendData));
+		std::shared_ptr<SendBuffer> sendBuffer = GSendBufferManager->Open(4096);
+		::memcpy(sendBuffer->Buffer(), sendData, sizeof(sendData));
+		sendBuffer->Close(sizeof(sendData));
+
 		Send(sendBuffer);
 	}
 
@@ -34,8 +36,10 @@ public:
 		
 		std::this_thread::sleep_for(1s);
 
-		std::shared_ptr<SendBuffer> sendBuffer = MakeShared<SendBuffer>(4096);
-		sendBuffer->CopyData(sendData, sizeof(sendData));
+		std::shared_ptr<SendBuffer> sendBuffer = GSendBufferManager->Open(4096);
+		::memcpy(sendBuffer->Buffer(), sendData, sizeof(sendData));
+		sendBuffer->Close(sizeof(sendData));
+
 		Send(sendBuffer);
 
 		return len;

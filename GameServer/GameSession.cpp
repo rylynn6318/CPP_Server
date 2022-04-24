@@ -16,8 +16,9 @@ auto GameSession::OnRecv(BYTE* buffer, int32 len)->int32
 {
 	std::cout << "OnRecv Len = " << len << std::endl;
 
-	std::shared_ptr<SendBuffer> sendBuffer = MakeShared<SendBuffer>(4096);
-	sendBuffer->CopyData(buffer, len);
+	std::shared_ptr<SendBuffer> sendBuffer = GSendBufferManager->Open(4096);
+	::memcpy(sendBuffer->Buffer(), buffer, len);
+	sendBuffer->Close(len);
 	GGameSessionManager.BroadCast(sendBuffer);
 
 	return len;
