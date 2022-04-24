@@ -1,6 +1,7 @@
 #pragma once
 #include "Types.h"
 #include "Allocator.h"
+#include <array>
 #include <vector>
 #include <list>
 #include <queue>
@@ -9,6 +10,9 @@
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
+
+template<typename Type, uint32 Size>
+using Array = std::array<Type, Size>;
 
 template<typename Type>
 using Vector = std::vector<Type, StlAllocator<Type>>;
