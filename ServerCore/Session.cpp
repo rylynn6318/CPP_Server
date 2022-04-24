@@ -16,12 +16,23 @@ Session::~Session()
 
 auto Session::Send(std::shared_ptr<SendBuffer> sendBuffer) -> void
 {
-	WRITE_LOCK;
+	if (IsConnected() == false)
+		return;
 
-	_sendQueue.push(sendBuffer);
+	bool registerSend = false;
 
-	if (_sendRegisterd.exchange(true) == false)
+	{
+		WRITE_LOCK;
+
+		_sendQueue.push(sendBuffer);
+		if (_sendRegisterd.exchange(true) == false)
+			registerSend = true;
+	}
+
+	if (registerSend)
+	{
 		RegisterSend();
+	}
 }
 
 auto Session::Connect() -> bool
@@ -36,10 +47,6 @@ auto Session::Disconnect(const WCHAR* cause) -> void
 
 	// TEMP
 	std::wcout << "Disconnect :" << cause << std::endl;
-
-	// ÄÁÅÙÃ÷ ÄÚµå¿¡¼­ ±¸Çö
-	OnDisconnected();
-	GetService()->ReleaseSession(GetSession());
 
 	RegisterDisconnect();
 }
@@ -218,7 +225,7 @@ auto Session::RegisterSend() -> void
 	}
 
 	DWORD numOfBytes{ 0 };
-	if (SOCKET_ERROR == ::WSASend(_socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), OUT &numOfBytes, 0, &_sendEvent, nullptr))
+	if (SOCKET_ERROR == ::WSASend(_socket, wsaBufs.data(), static_cast<DWORD>(wsaBufs.size()), OUT & numOfBytes, 0, &_sendEvent, nullptr))
 	{
 		int32 errorCode = ::WSAGetLastError();
 		if (errorCode != WSA_IO_PENDING)
@@ -249,6 +256,10 @@ auto Session::ProcessConnect() -> void
 auto Session::ProcessDisconnect() -> void
 {
 	_disconnectEvent.owner = nullptr; // Rec Count -1
+
+	// ÄÁÅÙÃ÷ ÄÚµå¿¡¼­ ±¸Çö
+	OnDisconnected();
+	GetService()->ReleaseSession(GetSession());
 }
 
 auto Session::ProcessRecv(int32 numOfBytes) -> void
@@ -321,4 +332,39 @@ auto Session::HandleError(int32 errorCode) -> void
 		std::cout << "Handle Error : " << errorCode << std::endl;
 		break;
 	}
+}
+
+PacketSession::PacketSession()
+{
+}
+
+PacketSession::~PacketSession()
+{
+}
+
+auto PacketSession::GetPacketSession() -> std::shared_ptr<PacketSession>
+{
+	return static_pointer_cast<PacketSession>(shared_from_this());
+}
+
+int32 PacketSession::OnRecv(BYTE* buffer, int32 len)
+{
+	int32 processLength = 0;
+
+	while (true)
+	{
+		int32 dataSize = len - processLength;
+
+		if (dataSize < sizeof(PacketHeader))
+			break;
+
+		PacketHeader header = *(reinterpret_cast<PacketHeader*>(&buffer[0]));
+		if (dataSize < header.size)
+			break;
+
+		OnRecvPacket(&buffer[0], header.size);
+		processLength += header.size;
+	}
+
+	return processLength;
 }

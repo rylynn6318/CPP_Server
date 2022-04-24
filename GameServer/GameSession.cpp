@@ -12,19 +12,14 @@ auto GameSession::OnDisconnected() -> void
 	GGameSessionManager.Remove(std::static_pointer_cast<GameSession>(shared_from_this()));
 }
 
-auto GameSession::OnRecv(BYTE* buffer, int32 len)->int32
+auto GameSession::OnRecvPacket(BYTE* buffer, int32 len)->int32
 {
-	std::cout << "OnRecv Len = " << len << std::endl;
-
-	std::shared_ptr<SendBuffer> sendBuffer = GSendBufferManager->Open(4096);
-	::memcpy(sendBuffer->Buffer(), buffer, len);
-	sendBuffer->Close(len);
-	GGameSessionManager.BroadCast(sendBuffer);
+	PacketHeader header = *(reinterpret_cast<PacketHeader*>(& buffer[0]));
+	std::cout << "Packet ID: " << header.id << " Size: " << header.size << std::endl;
 
 	return len;
 }
 
 auto GameSession::OnSend(int32 len) ->void
 {
-	std::cout << "OnSend Len = " << len << std::endl;
 }

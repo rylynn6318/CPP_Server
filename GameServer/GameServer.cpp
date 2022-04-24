@@ -28,5 +28,23 @@ int main()
 			});
 	}
 
+	char sendData[1000] = "Hello World";
+
+	while (true)
+	{
+		std::shared_ptr<SendBuffer>  sendBuffer = GSendBufferManager->Open(4096);
+
+		BYTE* buffer = sendBuffer->Buffer();
+		((PacketHeader*)buffer)->size = sizeof(sendData) + sizeof(PacketHeader);
+		((PacketHeader*)buffer)->id = 1;
+
+		::memcpy(&buffer[4], sendData, sizeof(sendData));
+		sendBuffer->Close(sizeof(sendData) + sizeof(PacketHeader));
+
+		GGameSessionManager.BroadCast(sendBuffer);
+
+		std::this_thread::sleep_for(250ms);
+	}
+
 	GThreadManager->Join();
 }

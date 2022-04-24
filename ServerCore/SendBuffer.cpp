@@ -103,6 +103,8 @@ auto SendBuffManager::Push(std::shared_ptr<SendBufferChunk> buffer) -> void
 
 auto SendBuffManager::Pop() -> std::shared_ptr<SendBufferChunk>
 {
+	std::cout << "SEND BUFFER CHUNK POP" << std::endl;
+
 	{
 		WRITE_LOCK;
 		if (_sendBufferChunk.empty() == false)
@@ -117,5 +119,6 @@ auto SendBuffManager::Pop() -> std::shared_ptr<SendBufferChunk>
 
 auto SendBuffManager::PushGlobal(SendBufferChunk* buffer) -> void
 {
+	std::cout << "PushGloabal SEND BUFFER CHUNK" << std::endl;
 	GSendBufferManager->Push(std::shared_ptr<SendBufferChunk>(buffer, PushGlobal));
 }
