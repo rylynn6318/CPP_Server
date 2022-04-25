@@ -5,6 +5,7 @@
 #include "GameSession.h"
 #include "SendBuffer.h"
 #include "GameSessionManager.h"
+#include "BufferWriter.h"
 
 int main()
 {
@@ -34,12 +35,17 @@ int main()
 	{
 		std::shared_ptr<SendBuffer>  sendBuffer = GSendBufferManager->Open(4096);
 
-		BYTE* buffer = sendBuffer->Buffer();
-		((PacketHeader*)buffer)->size = sizeof(sendData) + sizeof(PacketHeader);
-		((PacketHeader*)buffer)->id = 1;
+		BufferWriter bw(sendBuffer->Buffer(), sendBuffer->AllocSize());
+		PacketHeader* header = bw.Reserve<PacketHeader>();
 
-		::memcpy(&buffer[4], sendData, sizeof(sendData));
-		sendBuffer->Close(sizeof(sendData) + sizeof(PacketHeader));
+		// ID, 체력, 공격력
+		bw << (uint64)1001 << (uint32)100 << (uint16)10;
+		bw.Write(sendData, sizeof(sendData));
+
+		header->size = bw.WriteSize();
+		header->id = 1;
+
+		sendBuffer->Close(bw.WriteSize());
 
 		GGameSessionManager.BroadCast(sendBuffer);
 

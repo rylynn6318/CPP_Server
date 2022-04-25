@@ -9,7 +9,8 @@ public:
 	~SendBuffer() = default;
 
 	auto Buffer() -> BYTE*;
-	auto WriteSize() -> int32;
+	auto AllocSize() -> uint32;
+	auto WriteSize() -> uint32;
 	auto Close(uint32 writeSize) -> void;
 
 private:

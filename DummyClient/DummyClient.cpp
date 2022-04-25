@@ -3,6 +3,7 @@
 #include "ThreadManager.h"
 #include "Service.h"
 #include "Session.h"
+#include "BufferReader.h"
 
 char sendData[] = "Hello World!";
 
@@ -26,10 +27,19 @@ public:
 
 	virtual auto OnRecvPacket(BYTE* buffer, int32 len)->int32 override
 	{
-		PacketHeader header = *((PacketHeader*)&buffer);
+		BufferReader br(buffer, len);
+
+		PacketHeader header;
+		br >> header;
+		uint64 id;
+		uint32 hp;
+		uint16 attack;
+		br >> id >> hp >> attack;
+
+		std::cout << "ID : " << id << " HP: " << hp << " ATTACK:" << attack << std::endl;
 
 		char recvBuffer[4096];
-		::memcpy(recvBuffer, &buffer[4], header.size - sizeof(PacketHeader));
+		br.Read(recvBuffer, header.size - sizeof(PacketHeader) - 8 - 4 - 2);
 		std::cout << recvBuffer << std::endl;
 
 		return len;

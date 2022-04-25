@@ -11,7 +11,12 @@ auto SendBuffer::Buffer() -> BYTE*
 	return _buffer;
 }
 
-auto SendBuffer::WriteSize() -> int32
+auto SendBuffer::AllocSize() -> uint32
+{
+	return _allocSize;
+}
+
+auto SendBuffer::WriteSize() -> uint32
 {
 	return _writeSize;
 }
