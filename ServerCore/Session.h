@@ -95,8 +95,7 @@ public:
 	auto GetPacketSession() -> std::shared_ptr<PacketSession>;
 
 protected:
-	virtual int32 OnRecv(BYTE* buffer, int32 len) final;
-	virtual int32 OnRecvPacket(BYTE* buffer, int32 len) = 0;
-	
+	virtual auto OnRecv(BYTE* buffer, int32 len) -> int32 final;
+	virtual auto OnRecvPacket(BYTE* buffer, int32 len) -> void = 0;
 };
 

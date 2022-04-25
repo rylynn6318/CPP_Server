@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "GameSession.h"
 #include "GameSessionManager.h"
+#include "ServerPacketHandler.h"
 
 auto GameSession::OnConnected() -> void
 {
@@ -12,14 +13,11 @@ auto GameSession::OnDisconnected() -> void
 	GGameSessionManager.Remove(std::static_pointer_cast<GameSession>(shared_from_this()));
 }
 
-auto GameSession::OnRecvPacket(BYTE* buffer, int32 len)->int32
+auto GameSession::OnRecvPacket(BYTE* buffer, int32 len) -> void
 {
-	PacketHeader header = *(reinterpret_cast<PacketHeader*>(& buffer[0]));
-	std::cout << "Packet ID: " << header.id << " Size: " << header.size << std::endl;
-
-	return len;
+	ServerPacketHandler::HandlePacket(buffer, len);
 }
 
-auto GameSession::OnSend(int32 len) ->void
+auto GameSession::OnSend(int32 len) -> void
 {
 }

@@ -23,9 +23,6 @@ public:
 	auto Reserve() -> T*;
 
 	template<typename T>
-	auto operator<<(const T& source) -> BufferWriter&;
-
-	template<typename T>
 	auto operator<<(T&& source) -> BufferWriter&;
 
 private:
@@ -46,17 +43,10 @@ auto BufferWriter::Reserve() -> T*
 }
 
 template<typename T>
-auto BufferWriter::operator<<(const T& source) -> BufferWriter&
-{
-	*reinterpret_cast<T*>(&_buffer[_pos]) = source;
-	_pos += sizeof(T);
-	return *this;
-}
-
-template<typename T>
 auto BufferWriter::operator<<(T&& source) -> BufferWriter&
 {
-	*reinterpret_cast<T*>(&_buffer[_pos]) = std::move(source);
+	using DataType = std::remove_reference_t<T>;
+	*reinterpret_cast<DataType*>(&_buffer[_pos]) = std::forward<DataType>(source);
 	_pos += sizeof(T);
 	return *this;
 }
