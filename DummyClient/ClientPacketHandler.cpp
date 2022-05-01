@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "ClientPacketHandler.h"
 #include "BufferReader.h"
+#include "Protocol.pb.h"
 
 auto ClientPacketHandler::HandlePacket(BYTE* buffer, int32 length) -> void
 {
@@ -19,47 +20,24 @@ auto ClientPacketHandler::HandlePacket(BYTE* buffer, int32 length) -> void
 	}
 }
 
-struct BuffData
-{
-	uint64 buffId;
-	float remainTime;
-};
-
-struct S_TEST
-{
-	uint64 id;
-	uint32 hp;
-	uint16 attack;
-	std::vector<BuffData> buffs;
-};
-
 auto ClientPacketHandler::Handle_S_TEST(BYTE* buffer, int32 length) -> void
 {
-	BufferReader br(buffer, length);
+	Protocol::S_TEST packet;
 
-	PacketHeader header;
-	br >> header;
+	ASSERT_CRASH(packet.ParseFromArray(buffer + sizeof(PacketHeader), length - sizeof(PacketHeader)));
 
-	uint64 id;
-	uint32 hp;
-	uint16 attack;
-	br >> id >> hp >> attack;
+	std::cout << packet.id() << " " << packet.hp() << " " << packet.attack() << std::endl;
+	std::cout << "BUFSIZE: " << packet.buffs_size() << std::endl;
 
-	std::cout << "ID : " << id << " HP: " << hp << " ATTACK:" << attack << std::endl;
-
-	std::vector<BuffData> buffs;
-	uint16 buffCount;
-	br >> buffCount;
-	buffs.resize(buffCount);
-	for (int i = 0; i < buffCount; i++)
+	for (auto& buf : packet.buffs())
 	{
-		br >> buffs[i].buffId >> buffs[i].remainTime;
-	}
+		std::cout << "BUFINFO: " << buf.buffid() << " " << buf.remaintime() << std::endl;
+		std::cout << "VICTIMS: " << buf.victims_size() << std::endl;
+		for (auto& vic : buf.victims())
+		{
+			std::cout << vic << " ";
+		}
 
-	std::cout << "BuffCount : " << buffCount << std::endl;
-
-	for (BuffData& buff : buffs)
-	{
-		std::cout << "BuffInfo: " << buff.buffId << " " << buff.remainTime << std::endl;
+		std::cout << std::endl;
 	}
 }
