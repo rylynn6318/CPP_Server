@@ -6,11 +6,13 @@
 #include "SendBuffer.h"
 #include "GameSessionManager.h"
 #include "BufferWriter.h"
-#include "ServerPacketHandler.h"
+#include "ClientPacketHandler.h"
 #include "Protocol.pb.h"
 
 int main()
 {
+	ClientPacketHandler::Init();
+
 	std::shared_ptr<ServerService> service = MakeShared<ServerService>(
 		NetAddress(L"127.0.0.1", 7777),
 		MakeShared<IocpCore>(),
@@ -53,7 +55,7 @@ int main()
 			data->add_victims(2000);
 		}
 
-		std::shared_ptr<SendBuffer> sendBuffer = ServerPacketHandler::MakeSendBuffer(packet);
+		std::shared_ptr<SendBuffer> sendBuffer = ClientPacketHandler::MakeSendBuffer(packet);
 		GGameSessionManager.BroadCast(sendBuffer);
 
 		std::this_thread::sleep_for(250ms);
