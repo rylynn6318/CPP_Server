@@ -11,27 +11,32 @@ auto Handle_INVALID(std::shared_ptr<PacketSession>& session, BYTE* butter, int32
 	return false;
 }
 
-auto Handle_S_TEST(std::shared_ptr<PacketSession>& session, Protocol::S_TEST& packet) -> bool
+auto Handle_S_LOGIN(std::shared_ptr<PacketSession>& session, Protocol::S_LOGIN& packet) -> bool
 {
-	std::cout << packet.id() << " " << packet.hp() << " " << packet.attack() << std::endl;
-	std::cout << "BUFSIZE: " << packet.buffs_size() << std::endl;
+	if (packet.success() == false)
+		return true;
 
-	for (auto& buf : packet.buffs())
+	if (packet.players().size() == 0)
 	{
-		std::cout << "BUFINFO: " << buf.buffid() << " " << buf.remaintime() << std::endl;
-		std::cout << "VICTIMS: " << buf.victims_size() << std::endl;
-		for (auto& vic : buf.victims())
-		{
-			std::cout << vic << " ";
-		}
-
-		std::cout << std::endl;
+		// 캐릭터 생성창
 	}
+
+	// 입장 UI 버튼 눌러서 게임 입장
+	Protocol::C_ENTER_GAME enterGamePacket;
+	enterGamePacket.set_playerindex(0); // 첫번째 캐릭터로
+	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(enterGamePacket);
+	session->Send(sendBuffer);
 
 	return true;
 }
 
-auto Handle_S_LOGIN(std::shared_ptr<PacketSession>& session, Protocol::S_LOGIN& packet) -> bool
+auto Handle_S_ENTER_GAME(std::shared_ptr<PacketSession>& session, Protocol::S_ENTER_GAME& packet) -> bool
 {
-	return false;
+	return true;
+}
+
+auto Handle_S_CHAT(std::shared_ptr<PacketSession>& session, Protocol::S_CHAT& packet) -> bool
+{
+	std::cout << packet.msg() << std::endl;
+	return true;
 }

@@ -33,33 +33,5 @@ int main()
 			});
 	}
 
-	char sendData[1000] = "Hello World";
-
-	while (true)
-	{
-		Protocol::S_TEST packet;
-		packet.set_id(1000);
-		packet.set_hp(100);
-		packet.set_attack(10);
-		{
-			Protocol::BuffData* data = packet.add_buffs();
-			data->set_buffid(100);
-			data->set_remaintime(1.2f);
-			data->add_victims(4000);
-		}
-		{
-			Protocol::BuffData* data = packet.add_buffs();
-			data->set_buffid(200);
-			data->set_remaintime(2.5f);
-			data->add_victims(1000);
-			data->add_victims(2000);
-		}
-
-		std::shared_ptr<SendBuffer> sendBuffer = ClientPacketHandler::MakeSendBuffer(packet);
-		GGameSessionManager.BroadCast(sendBuffer);
-
-		std::this_thread::sleep_for(250ms);
-	}
-
 	GThreadManager->Join();
 }

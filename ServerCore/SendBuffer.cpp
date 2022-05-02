@@ -95,8 +95,6 @@ auto SendBuffManager::Open(uint32 size) -> std::shared_ptr<SendBuffer>
 		LSendBufferChunk->Reset();
 	}
 
-	std::cout << "FREE : " << LSendBufferChunk->FreeSize() << std::endl;
-
 	return LSendBufferChunk->Open(size);
 }
 
@@ -108,8 +106,6 @@ auto SendBuffManager::Push(std::shared_ptr<SendBufferChunk> buffer) -> void
 
 auto SendBuffManager::Pop() -> std::shared_ptr<SendBufferChunk>
 {
-	std::cout << "SEND BUFFER CHUNK POP" << std::endl;
-
 	{
 		WRITE_LOCK;
 		if (_sendBufferChunk.empty() == false)

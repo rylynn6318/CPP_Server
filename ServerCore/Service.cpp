@@ -39,6 +39,15 @@ auto Service::CreateSession() -> std::shared_ptr<Session>
 	return session;
 }
 
+auto Service::BroadCast(std::shared_ptr<SendBuffer> sendBuffer) -> void
+{
+	WRITE_LOCK;
+	for (const auto& session : _sessions)
+	{
+		session->Send(sendBuffer);
+	}
+}
+
 auto Service::AddSession(std::shared_ptr<Session> session) -> void
 {
 	WRITE_LOCK;

@@ -25,6 +25,9 @@ public:
 	auto CanStart() -> bool;
 	auto SetSessionFactory(std::function<std::shared_ptr<Session>(void)> func) -> void;
 	auto CreateSession() -> std::shared_ptr<Session>;
+
+	auto BroadCast(std::shared_ptr<SendBuffer> sendBuffer) -> void;
+
 	auto AddSession(std::shared_ptr<Session> session) -> void;
 	auto ReleaseSession(std::shared_ptr<Session> session) -> void;
 	auto GetCurrentSessionCount() -> int32;
