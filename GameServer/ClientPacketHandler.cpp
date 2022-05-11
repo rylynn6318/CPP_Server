@@ -62,13 +62,15 @@ auto Handle_C_ENTER_GAME(std::shared_ptr<PacketSession>& session, Protocol::C_EN
 	
 	uint64 index = packet.playerindex();
 	
-	std::shared_ptr<Player> player = gameSession->_players[index];
-	GRoom.Enter(player);
+	gameSession->_currentPlayer = gameSession->_players[index];
+	gameSession->_room = GRoom;
+	
+	GRoom->DoAsync(&Room::Enter, gameSession->_currentPlayer);
 
 	Protocol::S_ENTER_GAME enterGameAck;
 	enterGameAck.set_success(true);
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(enterGameAck);
-	player->ownerSession->Send(sendBuffer);
+	gameSession->_currentPlayer->ownerSession->Send(sendBuffer);
 
 	return true;
 }
@@ -81,7 +83,7 @@ auto Handle_C_CHAT(std::shared_ptr<PacketSession>& session, Protocol::C_CHAT& pa
 	charPacket.set_msg(packet.msg());
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(charPacket);
 
-	GRoom.BroadCast(sendBuffer);
+	GRoom->DoAsync(&Room::BroadCast, sendBuffer);
 
 	return true;
 }

@@ -1,8 +1,9 @@
 #pragma once
+#include "JobQueue.h"
 
 class Player;
 
-class Room
+class Room : public JobQueue
 {
 public:
 	auto Enter(std::shared_ptr<Player> player) -> void;
@@ -10,8 +11,7 @@ public:
 	auto BroadCast(std::shared_ptr<SendBuffer> sendBuffer) -> void;
 
 private:
-	USE_LOCK;
 	std::map <uint16, std::shared_ptr<Player>> _players;
 };
 
-extern Room GRoom;
+extern std::shared_ptr<Room> GRoom;

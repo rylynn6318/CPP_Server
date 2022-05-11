@@ -16,4 +16,7 @@ public:
 
 public:
 	Vector<std::shared_ptr<class Player>> _players;
+
+	std::shared_ptr<class Player> _currentPlayer;
+	std::weak_ptr<class Room> _room;
 };

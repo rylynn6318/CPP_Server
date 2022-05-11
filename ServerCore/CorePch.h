@@ -21,4 +21,5 @@
 
 #include "SendBuffer.h"
 #include "Session.h"
+#include "LockQueue.h"
 using namespace std::chrono_literals;

@@ -16,6 +16,9 @@ public:
 	static auto InitTLS() -> void;
 	static auto DestroyTLS() -> void;
 
+	static auto DoGlobalQueueWork() -> void;
+	static auto DistributeReservedJobs() -> void;
+
 private:
 	Mutex _lock;
 	std::vector<std::thread> _threads;

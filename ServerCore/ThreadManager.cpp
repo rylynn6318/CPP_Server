@@ -2,6 +2,8 @@
 #include "ThreadManager.h"
 #include "CoreTLS.h"
 #include "CoreGlobal.h"
+#include "GlobalQueue.h"
+#include "JobQueue.h"
 
 ThreadManager::ThreadManager()
 {
@@ -45,4 +47,31 @@ auto ThreadManager::InitTLS() -> void
 
 auto ThreadManager::DestroyTLS() -> void
 {
+}
+
+auto ThreadManager::DoGlobalQueueWork() -> void
+{
+	while (true)
+	{
+		uint64 now = ::GetTickCount64();
+		if (now > LEndTickCount)
+		{
+			break;
+		}
+
+		std::shared_ptr<JobQueue> jobQueue = GGlobalQueue->Pop();
+		if (jobQueue == nullptr)
+		{
+			break;
+		}
+
+		jobQueue->Execute();
+	}
+}
+
+auto ThreadManager::DistributeReservedJobs() -> void
+{
+	const uint64 now = ::GetTickCount64();
+
+	GJobTimer->Distribute(now);
 }
